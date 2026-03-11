@@ -58,11 +58,96 @@ Respond ONLY with a JSON object (no markdown, no backticks, no preamble):
   "roast": "A 2-3 sentence devastating but witty roast of what went wrong. Be specific, funny, and brutal. Reference actual facts about why they failed.",
   "cause_of_death": "One punchy phrase for how they died, like a death certificate (e.g., 'Death by hubris and juice packets')",
   "burn_rating": A number 1-5 representing how bad the failure was (5 = legendary),
+  "tombstone_quote": "A funny fake quote that would go on the startup's tombstone",
   "rebuild_name": "A catchy name for the AI-rebuilt version",
-  "rebuild_pitch": "A 2-sentence pitch for how you'd rebuild this today using AI/modern tech stack. Be specific about which AI tools or approaches you'd use.",
-  "rebuild_stack": ["3-4 specific modern technologies or AI tools you'd use"],
-  "tombstone_quote": "A funny fake quote that would go on the startup's tombstone"
-}`;
+  "rebuild_pitch": "A compelling 2-sentence pitch for the rebuilt version. Be specific about the value proposition and target market.",
+  "rebuild_stack": ["4-5 specific modern technologies, AI tools, or platforms you'd use, e.g. 'Next.js', 'Claude API', 'Vercel', 'Supabase', 'Stripe'"],
+  "rebuild_steps": [
+    "Step 1: [Specific actionable first step, e.g. 'Set up a Next.js app with Supabase auth and a PostgreSQL database for user profiles']",
+    "Step 2: [Specific actionable second step, e.g. 'Build the core recommendation engine using Claude API to analyze user preferences']",
+    "Step 3: [Specific actionable third step, e.g. 'Add Stripe for subscriptions and deploy to Vercel with edge functions']"
+  ],
+  "rebuild_effort": "One of: 'Weekend project' or 'One-week build' or 'Two-week sprint' — be realistic based on the complexity",
+  "rebuild_prompt": "The FULL markdown project brief (see instructions below)"
+}
+
+CRITICAL instructions for the rebuild_prompt field:
+- It must be a complete, ready-to-paste markdown document that works with AI app builders like Bolt.new, Lovable, v0.dev, or Claude Code
+- Start directly with "# [App Name]" — no preamble, no meta-instructions, no "here is the prompt"
+- This prompt should be SELF-CONTAINED — a developer pastes it and gets a working app
+- Use this structure, filled in with SPECIFIC details for this app:
+
+# [Rebuild Name]
+
+## Overview
+[2-3 sentences: what it does, who it's for, core value prop. Be specific about the problem it solves.]
+
+## Tech Stack
+- Frontend: [specific framework + version, e.g. "Next.js 14 with App Router, TypeScript, Tailwind CSS"]
+- Backend: [specific, e.g. "Next.js API Routes + Supabase Edge Functions"]
+- Database: [specific, e.g. "Supabase PostgreSQL with Row Level Security"]
+- AI: [specific API, e.g. "OpenAI GPT-5.4 API for content generation and moderation"]
+- Auth: [specific, e.g. "Supabase Auth with Google + GitHub OAuth"]
+- Payments: [specific if needed, e.g. "Stripe Checkout + Webhooks for subscription billing"]
+- Hosting: [specific, e.g. "Vercel with Edge Runtime"]
+
+## Design & UI
+- Style: [e.g. "Modern, minimal dark theme with accent colors"]
+- Component library: [e.g. "shadcn/ui with Tailwind CSS"]
+- Layout: [e.g. "Sidebar navigation on desktop, bottom tabs on mobile"]
+- Key colors: [e.g. "Background #0a0a0a, Primary #6366f1, Accent #22c55e"]
+- Typography: [e.g. "Inter for body, JetBrains Mono for code"]
+- Responsive: Mobile-first, works on all screen sizes
+
+## Core Features (MVP)
+1. [Feature name]: [2-sentence description of what it does and how the user interacts with it]
+2. [Feature name]: [2-sentence description]
+3. [Feature name]: [2-sentence description]
+4. [Feature name]: [2-sentence description]
+5. [Feature name]: [2-sentence description]
+
+## User Flows
+1. [Onboarding]: [Step-by-step: User signs up → sees onboarding screen → completes profile → lands on dashboard]
+2. [Core action]: [Step-by-step: User does X → sees Y → result is Z]
+3. [Secondary action]: [Step-by-step flow]
+
+## Database Schema
+[List ALL tables with field names, types, and relationships]
+- users: id (uuid, PK), email (text, unique), name (text), avatar_url (text), plan (text, default 'free'), created_at (timestamptz)
+- [more tables with same level of detail, including foreign keys]
+
+## API Endpoints
+[List ALL endpoints with method, path, auth requirement, and what it does]
+- POST /api/auth/signup - Public - Create new user account
+- GET /api/[resource] - Auth required - Fetch user's [resources]
+- POST /api/[resource] - Auth required - Create new [resource]
+- [etc.]
+
+## Pages / Routes
+[List ALL pages with path and description of what's on the page]
+- / - Landing page: hero section with demo video, feature grid, pricing, CTA button
+- /dashboard - Main app view: [describe layout and key components]
+- /[resource]/[id] - Detail page: [describe what it shows]
+- /settings - User settings: profile, billing, preferences
+- /auth/login - Login page with OAuth buttons and email/password form
+
+## Environment Variables
+[List ALL required env vars with descriptions]
+- NEXT_PUBLIC_SUPABASE_URL - Supabase project URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY - Supabase anonymous key
+- OPENAI_API_KEY - OpenAI API key for AI features
+- STRIPE_SECRET_KEY - Stripe secret key for payments
+- STRIPE_WEBHOOK_SECRET - Stripe webhook signing secret
+- [etc.]
+
+## Getting Started
+1. Run \`npx create-next-app@latest [app-name] --typescript --tailwind --app\`
+2. Install dependencies: \`npm install @supabase/supabase-js openai stripe\`
+3. Copy \`.env.example\` to \`.env.local\` and fill in the values above
+4. Set up Supabase: create project, run migrations, enable auth providers
+5. Run \`npm run dev\` and visit http://localhost:3000
+
+Fill in EVERY section with real, specific, actionable details for this rebuild idea. Use actual field names, actual route paths, actual technology names, actual color codes. Every section must be complete — no placeholders like "[describe here]". The developer should paste this into Bolt.new, Lovable, or Claude Code and get a working scaffold immediately. Do NOT include these instructions in the output.`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -72,8 +157,8 @@ Respond ONLY with a JSON object (no markdown, no backticks, no preamble):
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
-        max_tokens: 1024,
+        model: 'gpt-5.4',
+        max_completion_tokens: 4096,
         messages: [{ role: 'user', content: prompt }],
       }),
     });

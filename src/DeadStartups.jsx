@@ -114,7 +114,7 @@ export default function DeadStartups() {
   const [suggestName, setSuggestName] = useState("");
   const [suggestSubmitted, setSuggestSubmitted] = useState(false);
   const [activeCategory, setActiveCategory] = useState("All");
-  const [rebuildExpanded, setRebuildExpanded] = useState(false);
+  const [promptCopied, setPromptCopied] = useState(false);
   const cardRef = useRef(null);
   const hasAutoRoasted = useRef(false);
 
@@ -123,7 +123,7 @@ export default function DeadStartups() {
     setLoading(true);
     setRoastResult(null);
     setShowCard(false);
-    setRebuildExpanded(false);
+    setPromptCopied(false);
     window.location.hash = `/roast/${startup.slug}`;
 
     try {
@@ -145,6 +145,9 @@ export default function DeadStartups() {
         rebuild_name: startup.name + " 2.0",
         rebuild_pitch: "Step 1: Don't do what they did. Step 2: Use AI. Step 3: Profit.",
         rebuild_stack: ["Claude", "Common Sense", "Actual Revenue"],
+        rebuild_steps: ["Step 1: Don't repeat their mistakes", "Step 2: Use AI to automate everything", "Step 3: Actually charge money for your product"],
+        rebuild_effort: "Weekend project",
+        rebuild_prompt: `# ${startup.name} 2.0\n\n## Overview\nA modern reimagining of ${startup.name} that solves the same core problem — ${startup.tagline.toLowerCase()} — but built with AI-first architecture and a sustainable business model.\n\n## Tech Stack\n- Frontend: Next.js 14 with App Router\n- Backend: Next.js API Routes + Edge Functions\n- Database: Supabase (PostgreSQL)\n- AI: Claude API for intelligent features\n- Auth: Supabase Auth (Google + email)\n- Payments: Stripe\n- Hosting: Vercel\n\n## Core Features (MVP)\n1. User authentication and onboarding\n2. Core product experience with AI-powered features\n3. Dashboard with analytics\n4. Stripe subscription payments\n5. Admin panel for content management\n\n## Getting Started\nRun \`npx create-next-app\` with TypeScript. Set up Supabase project and add env vars for SUPABASE_URL, SUPABASE_ANON_KEY, CLAUDE_API_KEY, and STRIPE_SECRET_KEY. Run \`npm run dev\` to start.`,
         tombstone_quote: "At least we tried... with other people's money."
       });
       incrementRoastCount();
@@ -160,7 +163,7 @@ export default function DeadStartups() {
     setShowCard(false);
     setSearchQuery("");
     setCopyConfirm(false);
-    setRebuildExpanded(false);
+    setPromptCopied(false);
     window.location.hash = "";
   }, []);
 
@@ -185,7 +188,7 @@ export default function DeadStartups() {
         setSelectedStartup(null);
         setRoastResult(null);
         setShowCard(false);
-        setRebuildExpanded(false);
+        setPromptCopied(false);
       } else {
         const startup = FAILED_STARTUPS.find(s => s.slug === slug);
         if (startup && (!selectedStartup || startup.slug !== selectedStartup.slug)) {
@@ -826,69 +829,111 @@ export default function DeadStartups() {
                   </div>
                 </div>
 
-                {/* AI Resurrection Plan - expandable, outside the card */}
-                <div style={{ marginTop: 16 }}>
-                  <button
-                    onClick={() => setRebuildExpanded(!rebuildExpanded)}
-                    style={{
-                      width: "100%",
-                      background: "linear-gradient(135deg, rgba(34,197,94,0.08), rgba(16,185,129,0.05))",
-                      border: "1px solid rgba(34,197,94,0.15)",
-                      borderRadius: rebuildExpanded ? "12px 12px 0 0" : 12,
-                      padding: "16px 20px",
-                      cursor: "pointer",
+                {/* AI Resurrection Plan - always visible, outside the card */}
+                <div style={{
+                  marginTop: 16,
+                  background: "linear-gradient(135deg, rgba(34,197,94,0.06), rgba(16,185,129,0.03))",
+                  border: "1px solid rgba(34,197,94,0.15)",
+                  borderRadius: 12,
+                  padding: 24,
+                }}>
+                  {/* Section heading */}
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    fontSize: 10, letterSpacing: 3, textTransform: "uppercase", fontWeight: 700,
+                    color: "#22c55e", marginBottom: 20,
+                    fontFamily: "'Courier New', monospace",
+                  }}>
+                    <BOLT /> AI RESURRECTION PLAN
+                  </div>
+
+                  {/* Rebuild name + effort badge */}
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
+                    marginBottom: 10,
+                  }}>
+                    <h3 style={{
+                      fontSize: 24, fontWeight: 800, margin: 0,
+                      color: "#22c55e", letterSpacing: -0.5,
                       fontFamily: "'Courier New', monospace",
-                      color: "#22c55e",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      transition: "all 0.2s",
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = "rgba(34,197,94,0.12)"}
-                    onMouseLeave={(e) => e.currentTarget.style.background = "linear-gradient(135deg, rgba(34,197,94,0.08), rgba(16,185,129,0.05))"}
-                  >
-                    <div style={{
-                      display: "flex", alignItems: "center", gap: 8,
-                      fontSize: 10, letterSpacing: 3, textTransform: "uppercase", fontWeight: 700,
                     }}>
-                      <BOLT /> AI RESURRECTION PLAN
-                    </div>
-                    <span style={{ fontSize: 14, transition: "transform 0.2s", transform: rebuildExpanded ? "rotate(180deg)" : "rotate(0)" }}>
-                      {"\u25BC"}
-                    </span>
-                  </button>
-                  {rebuildExpanded && (
-                    <div style={{
-                      background: "linear-gradient(135deg, rgba(34,197,94,0.06), rgba(16,185,129,0.03))",
-                      border: "1px solid rgba(34,197,94,0.15)",
-                      borderTop: "none",
-                      borderRadius: "0 0 12px 12px",
-                      padding: 24,
-                      animation: "fadeSlideIn 0.3s ease both",
-                    }}>
-                      <h3 style={{
-                        fontSize: 24, fontWeight: 800, margin: "0 0 10px 0",
-                        color: "#22c55e", letterSpacing: -0.5,
+                      {roastResult.rebuild_name}
+                    </h3>
+                    {roastResult.rebuild_effort && (
+                      <span style={{
+                        display: "inline-block",
+                        border: "1px solid rgba(34,197,94,0.4)",
+                        color: "#22c55e",
+                        padding: "3px 10px",
+                        borderRadius: 20,
+                        fontSize: 11,
+                        fontWeight: 600,
+                        letterSpacing: 0.5,
                         fontFamily: "'Courier New', monospace",
                       }}>
-                        {roastResult.rebuild_name}
-                      </h3>
+                        {roastResult.rebuild_effort}
+                      </span>
+                    )}
+                  </div>
 
-                      <p style={{
-                        fontSize: 15, lineHeight: 1.75, color: "#ebebeb",
-                        margin: "0 0 20px 0",
-                      }}>
-                        {roastResult.rebuild_pitch}
-                      </p>
+                  {/* Rebuild pitch */}
+                  <p style={{
+                    fontSize: 15, lineHeight: 1.75, color: "#ebebeb",
+                    margin: "0 0 24px 0",
+                  }}>
+                    {roastResult.rebuild_pitch}
+                  </p>
 
+                  {/* Build steps */}
+                  {roastResult.rebuild_steps && roastResult.rebuild_steps.length > 0 && (
+                    <div style={{ marginBottom: 24 }}>
                       <div style={{
-                        display: "flex", flexWrap: "wrap", gap: 8,
+                        fontSize: 10, letterSpacing: 2, color: "#9ca3af",
+                        textTransform: "uppercase", marginBottom: 12,
+                        fontFamily: "'Courier New', monospace", fontWeight: 600,
+                        display: "flex", alignItems: "center", gap: 8,
                       }}>
-                        {roastResult.rebuild_stack?.map((tech, i) => (
+                        <span style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+                        BUILD STEPS
+                        <span style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+                      </div>
+                      {roastResult.rebuild_steps.map((step, i) => (
+                        <div key={i} style={{
+                          display: "flex", alignItems: "flex-start", gap: 10,
+                          marginBottom: i < roastResult.rebuild_steps.length - 1 ? 10 : 0,
+                        }}>
+                          <span style={{
+                            color: "#22c55e", fontSize: 16, lineHeight: "22px", flexShrink: 0,
+                          }}>
+                            {String.fromCodePoint(0x2460 + i)}
+                          </span>
+                          <span style={{ color: "#ebebeb", fontSize: 15, lineHeight: "22px" }}>
+                            {step}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Tech stack */}
+                  {roastResult.rebuild_stack && roastResult.rebuild_stack.length > 0 && (
+                    <div style={{ marginBottom: 24 }}>
+                      <div style={{
+                        fontSize: 10, letterSpacing: 2, color: "#9ca3af",
+                        textTransform: "uppercase", marginBottom: 12,
+                        fontFamily: "'Courier New', monospace", fontWeight: 600,
+                        display: "flex", alignItems: "center", gap: 8,
+                      }}>
+                        <span style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+                        TECH STACK
+                        <span style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {roastResult.rebuild_stack.map((tech, i) => (
                           <span key={i} style={{
                             background: "rgba(34,197,94,0.1)",
                             border: "1px solid rgba(34,197,94,0.2)",
-                            padding: "5px 12px", borderRadius: 4,
+                            padding: "5px 12px", borderRadius: 20,
                             fontSize: 11, color: "#22c55e",
                             letterSpacing: 0.5, fontWeight: 600,
                           }}>
@@ -896,6 +941,85 @@ export default function DeadStartups() {
                           </span>
                         ))}
                       </div>
+                    </div>
+                  )}
+
+                  {/* Build this with AI card */}
+                  {roastResult.rebuild_prompt && (
+                    <div style={{
+                      background: "rgba(34,197,94,0.08)",
+                      border: "2px dashed rgba(34,197,94,0.3)",
+                      borderRadius: 10,
+                      padding: 20,
+                    }}>
+                      <div style={{
+                        fontSize: 12, letterSpacing: 2, color: "#22c55e",
+                        textTransform: "uppercase", fontWeight: 700,
+                        marginBottom: 8,
+                        fontFamily: "'Courier New', monospace",
+                      }}>
+                        {"\uD83D\uDE80"} BUILD THIS WITH AI
+                      </div>
+                      <p style={{
+                        fontSize: 14, lineHeight: 1.6, color: "#9ca3af",
+                        margin: "0 0 12px 0",
+                      }}>
+                        A complete project brief you can paste into Claude Code or Cursor to scaffold the entire app.
+                      </p>
+
+                      {/* Prompt preview */}
+                      <div style={{
+                        background: "#0a0a0a",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        borderRadius: 8,
+                        padding: 16,
+                        marginBottom: 16,
+                        maxHeight: 200,
+                        overflowY: "auto",
+                        fontFamily: "'Courier New', monospace",
+                        fontSize: 12,
+                        lineHeight: 1.6,
+                        color: "#9ca3af",
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                      }}>
+                        {roastResult.rebuild_prompt}
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          navigator.clipboard?.writeText(roastResult.rebuild_prompt);
+                          setPromptCopied(true);
+                          setTimeout(() => setPromptCopied(false), 3000);
+                        }}
+                        style={{
+                          width: "100%",
+                          background: promptCopied ? "rgba(34,197,94,0.2)" : "#22c55e",
+                          border: promptCopied ? "1px solid #22c55e" : "none",
+                          borderRadius: 8,
+                          padding: "14px 20px",
+                          cursor: "pointer",
+                          color: promptCopied ? "#22c55e" : "#0a0a0a",
+                          fontSize: 15,
+                          fontWeight: 700,
+                          letterSpacing: 1.5,
+                          textTransform: "uppercase",
+                          fontFamily: "'Courier New', monospace",
+                          transition: "all 0.2s",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!promptCopied) {
+                            e.currentTarget.style.background = "#16a34a";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!promptCopied) {
+                            e.currentTarget.style.background = "#22c55e";
+                          }
+                        }}
+                      >
+                        {promptCopied ? "\u2705 COPIED! Paste into Claude Code or Cursor" : "COPY BUILD PROMPT"}
+                      </button>
                     </div>
                   )}
                 </div>
