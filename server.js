@@ -32,16 +32,15 @@ const FAILED_STARTUPS = [
 
 app.use(express.json());
 
+// --- Fast roast endpoint (no rebuild_prompt) ---
 app.post('/api/roast', async (req, res) => {
+  console.log('[ROAST] Request received:', JSON.stringify(req.body).slice(0, 200));
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: 'OPENAI_API_KEY is not set' });
-  }
+  if (!apiKey) return res.status(500).json({ error: 'OPENAI_API_KEY is not set' });
 
   const { startup } = req.body;
-  if (!startup) {
-    return res.status(400).json({ error: 'Missing startup object in request body' });
-  }
+  if (!startup) return res.status(400).json({ error: 'Missing startup object in request body' });
+  console.log('[ROAST] Calling OpenAI for:', startup.name);
 
   const prompt = `You are DeadStartups.ai — a brutally honest, darkly funny startup post-mortem analyst. You combine the wit of a late-night comedian with the analytical mind of a VC partner who's seen it all.
 
@@ -63,91 +62,12 @@ Respond ONLY with a JSON object (no markdown, no backticks, no preamble):
   "rebuild_pitch": "A compelling 2-sentence pitch for the rebuilt version. Be specific about the value proposition and target market.",
   "rebuild_stack": ["4-5 specific modern technologies, AI tools, or platforms you'd use, e.g. 'Next.js', 'Claude API', 'Vercel', 'Supabase', 'Stripe'"],
   "rebuild_steps": [
-    "Step 1: [Specific actionable first step, e.g. 'Set up a Next.js app with Supabase auth and a PostgreSQL database for user profiles']",
-    "Step 2: [Specific actionable second step, e.g. 'Build the core recommendation engine using Claude API to analyze user preferences']",
-    "Step 3: [Specific actionable third step, e.g. 'Add Stripe for subscriptions and deploy to Vercel with edge functions']"
+    "Step 1: [Specific actionable first step]",
+    "Step 2: [Specific actionable second step]",
+    "Step 3: [Specific actionable third step]"
   ],
-  "rebuild_effort": "One of: 'Weekend project' or 'One-week build' or 'Two-week sprint' — be realistic based on the complexity",
-  "rebuild_prompt": "The FULL markdown project brief (see instructions below)"
-}
-
-CRITICAL instructions for the rebuild_prompt field:
-- It must be a complete, ready-to-paste markdown document that works with AI app builders like Bolt.new, Lovable, v0.dev, or Claude Code
-- Start directly with "# [App Name]" — no preamble, no meta-instructions, no "here is the prompt"
-- This prompt should be SELF-CONTAINED — a developer pastes it and gets a working app
-- Use this structure, filled in with SPECIFIC details for this app:
-
-# [Rebuild Name]
-
-## Overview
-[2-3 sentences: what it does, who it's for, core value prop. Be specific about the problem it solves.]
-
-## Tech Stack
-- Frontend: [specific framework + version, e.g. "Next.js 14 with App Router, TypeScript, Tailwind CSS"]
-- Backend: [specific, e.g. "Next.js API Routes + Supabase Edge Functions"]
-- Database: [specific, e.g. "Supabase PostgreSQL with Row Level Security"]
-- AI: [specific API, e.g. "OpenAI GPT-5.4 API for content generation and moderation"]
-- Auth: [specific, e.g. "Supabase Auth with Google + GitHub OAuth"]
-- Payments: [specific if needed, e.g. "Stripe Checkout + Webhooks for subscription billing"]
-- Hosting: [specific, e.g. "Vercel with Edge Runtime"]
-
-## Design & UI
-- Style: [e.g. "Modern, minimal dark theme with accent colors"]
-- Component library: [e.g. "shadcn/ui with Tailwind CSS"]
-- Layout: [e.g. "Sidebar navigation on desktop, bottom tabs on mobile"]
-- Key colors: [e.g. "Background #0a0a0a, Primary #6366f1, Accent #22c55e"]
-- Typography: [e.g. "Inter for body, JetBrains Mono for code"]
-- Responsive: Mobile-first, works on all screen sizes
-
-## Core Features (MVP)
-1. [Feature name]: [2-sentence description of what it does and how the user interacts with it]
-2. [Feature name]: [2-sentence description]
-3. [Feature name]: [2-sentence description]
-4. [Feature name]: [2-sentence description]
-5. [Feature name]: [2-sentence description]
-
-## User Flows
-1. [Onboarding]: [Step-by-step: User signs up → sees onboarding screen → completes profile → lands on dashboard]
-2. [Core action]: [Step-by-step: User does X → sees Y → result is Z]
-3. [Secondary action]: [Step-by-step flow]
-
-## Database Schema
-[List ALL tables with field names, types, and relationships]
-- users: id (uuid, PK), email (text, unique), name (text), avatar_url (text), plan (text, default 'free'), created_at (timestamptz)
-- [more tables with same level of detail, including foreign keys]
-
-## API Endpoints
-[List ALL endpoints with method, path, auth requirement, and what it does]
-- POST /api/auth/signup - Public - Create new user account
-- GET /api/[resource] - Auth required - Fetch user's [resources]
-- POST /api/[resource] - Auth required - Create new [resource]
-- [etc.]
-
-## Pages / Routes
-[List ALL pages with path and description of what's on the page]
-- / - Landing page: hero section with demo video, feature grid, pricing, CTA button
-- /dashboard - Main app view: [describe layout and key components]
-- /[resource]/[id] - Detail page: [describe what it shows]
-- /settings - User settings: profile, billing, preferences
-- /auth/login - Login page with OAuth buttons and email/password form
-
-## Environment Variables
-[List ALL required env vars with descriptions]
-- NEXT_PUBLIC_SUPABASE_URL - Supabase project URL
-- NEXT_PUBLIC_SUPABASE_ANON_KEY - Supabase anonymous key
-- OPENAI_API_KEY - OpenAI API key for AI features
-- STRIPE_SECRET_KEY - Stripe secret key for payments
-- STRIPE_WEBHOOK_SECRET - Stripe webhook signing secret
-- [etc.]
-
-## Getting Started
-1. Run \`npx create-next-app@latest [app-name] --typescript --tailwind --app\`
-2. Install dependencies: \`npm install @supabase/supabase-js openai stripe\`
-3. Copy \`.env.example\` to \`.env.local\` and fill in the values above
-4. Set up Supabase: create project, run migrations, enable auth providers
-5. Run \`npm run dev\` and visit http://localhost:3000
-
-Fill in EVERY section with real, specific, actionable details for this rebuild idea. Use actual field names, actual route paths, actual technology names, actual color codes. Every section must be complete — no placeholders like "[describe here]". The developer should paste this into Bolt.new, Lovable, or Claude Code and get a working scaffold immediately. Do NOT include these instructions in the output.`;
+  "rebuild_effort": "One of: 'Weekend project' or 'One-week build' or 'Two-week sprint' — be realistic based on the complexity"
+}`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -157,12 +77,13 @@ Fill in EVERY section with real, specific, actionable details for this rebuild i
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-5.4',
-        max_completion_tokens: 4096,
+        model: 'gpt-4.1',
+        max_completion_tokens: 1024,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
 
+    console.log('[ROAST] OpenAI response status:', response.status);
     if (!response.ok) {
       const error = await response.text();
       return res.status(response.status).json({ error });
@@ -170,17 +91,113 @@ Fill in EVERY section with real, specific, actionable details for this rebuild i
 
     const data = await response.json();
     const text = data.choices[0].message.content;
+    console.log('[ROAST] Success, length:', text.length);
 
     try {
       const clean = text.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(clean);
-      res.json(parsed);
+      res.json(JSON.parse(clean));
     } catch {
       res.json({ raw: text });
     }
   } catch (err) {
     console.error('OpenAI API error:', err);
     res.status(500).json({ error: 'Failed to call OpenAI API' });
+  }
+});
+
+// --- Slow build prompt endpoint (called async) ---
+app.post('/api/build-prompt', async (req, res) => {
+  console.log('[PROMPT] Request received');
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: 'OPENAI_API_KEY is not set' });
+
+  const { startup, rebuild_name, rebuild_pitch, rebuild_stack } = req.body;
+  if (!startup) return res.status(400).json({ error: 'Missing startup in request body' });
+  console.log('[PROMPT] Generating build prompt for:', rebuild_name || startup.name);
+
+  const prompt = `You are an expert software architect. Generate a comprehensive, ready-to-paste markdown project brief for an AI app builder (Bolt.new, Lovable, v0.dev, or Claude Code).
+
+Context: This is a modern AI-powered rebuild of the failed startup "${startup.name}" (${startup.tagline}).
+- Rebuild name: ${rebuild_name || startup.name + ' 2.0'}
+- Pitch: ${rebuild_pitch || 'A modern reimagining of ' + startup.name}
+- Suggested stack: ${(rebuild_stack || []).join(', ')}
+
+Output ONLY the markdown document. Start directly with "# ${rebuild_name || startup.name + ' 2.0'}" — no preamble, no backticks, no explanation.
+
+Include ALL of these sections with SPECIFIC, ACTIONABLE details (no placeholders):
+
+# [App Name]
+
+## Overview
+[2-3 sentences: what it does, who it's for, core value prop]
+
+## Tech Stack
+- Frontend: [specific framework + version, e.g. "Next.js 14 with App Router, TypeScript, Tailwind CSS"]
+- Backend: [specific]
+- Database: [specific with security approach]
+- AI: [specific API and what it's used for]
+- Auth: [specific providers]
+- Payments: [if needed]
+- Hosting: [specific]
+
+## Design & UI
+- Style, Component library, Layout, Key colors (hex codes), Typography, Responsive notes
+
+## Core Features (MVP)
+1-5 features with 2-sentence descriptions each
+
+## User Flows
+1. Onboarding flow (step-by-step)
+2. Core action flow (step-by-step)
+3. Secondary action flow (step-by-step)
+
+## Database Schema
+ALL tables with field names, types (uuid, text, timestamptz, etc.), PKs, FKs, defaults, and relationships
+
+## API Endpoints
+ALL endpoints with method, path, auth requirement, and description
+
+## Pages / Routes
+ALL pages with path and description of what's on each page
+
+## Environment Variables
+ALL required env vars with descriptions
+
+## Getting Started
+Numbered steps with actual commands (npx create, npm install, etc.)
+
+Make every section complete and specific. Use actual field names, route paths, technology names, color codes. A developer should paste this and get a working scaffold immediately.`;
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4.1',
+        max_completion_tokens: 4096,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+
+    console.log('[PROMPT] OpenAI response status:', response.status);
+    if (!response.ok) {
+      const error = await response.text();
+      return res.status(response.status).json({ error });
+    }
+
+    const data = await response.json();
+    const text = data.choices[0].message.content;
+    console.log('[PROMPT] Success, length:', text.length);
+
+    // Strip any wrapping backticks
+    const clean = text.replace(/^```(?:markdown)?\n?/, '').replace(/\n?```$/, '').trim();
+    res.json({ rebuild_prompt: clean });
+  } catch (err) {
+    console.error('Build prompt API error:', err);
+    res.status(500).json({ error: 'Failed to generate build prompt' });
   }
 });
 

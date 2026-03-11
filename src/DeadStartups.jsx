@@ -115,6 +115,9 @@ export default function DeadStartups() {
   const [suggestSubmitted, setSuggestSubmitted] = useState(false);
   const [activeCategory, setActiveCategory] = useState("All");
   const [promptCopied, setPromptCopied] = useState(false);
+  const [buildPrompt, setBuildPrompt] = useState(null);
+  const [buildPromptLoading, setBuildPromptLoading] = useState(false);
+  const [showBuildPrompt, setShowBuildPrompt] = useState(false);
   const cardRef = useRef(null);
   const hasAutoRoasted = useRef(false);
 
@@ -124,6 +127,9 @@ export default function DeadStartups() {
     setRoastResult(null);
     setShowCard(false);
     setPromptCopied(false);
+    setBuildPrompt(null);
+    setBuildPromptLoading(true);
+    setShowBuildPrompt(false);
     window.location.hash = `/roast/${startup.slug}`;
 
     try {
@@ -136,6 +142,24 @@ export default function DeadStartups() {
       setRoastResult(parsed);
       incrementRoastCount();
       setTimeout(() => setShowCard(true), 100);
+
+      // Fire async build prompt call with roast context
+      fetch("/api/build-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          startup,
+          rebuild_name: parsed.rebuild_name,
+          rebuild_pitch: parsed.rebuild_pitch,
+          rebuild_stack: parsed.rebuild_stack,
+        })
+      })
+        .then(r => r.json())
+        .then(data => {
+          setBuildPrompt(data.rebuild_prompt);
+          setBuildPromptLoading(false);
+        })
+        .catch(() => setBuildPromptLoading(false));
     } catch (err) {
       console.error(err);
       setRoastResult({
@@ -147,9 +171,9 @@ export default function DeadStartups() {
         rebuild_stack: ["Claude", "Common Sense", "Actual Revenue"],
         rebuild_steps: ["Step 1: Don't repeat their mistakes", "Step 2: Use AI to automate everything", "Step 3: Actually charge money for your product"],
         rebuild_effort: "Weekend project",
-        rebuild_prompt: `# ${startup.name} 2.0\n\n## Overview\nA modern reimagining of ${startup.name} that solves the same core problem — ${startup.tagline.toLowerCase()} — but built with AI-first architecture and a sustainable business model.\n\n## Tech Stack\n- Frontend: Next.js 14 with App Router\n- Backend: Next.js API Routes + Edge Functions\n- Database: Supabase (PostgreSQL)\n- AI: Claude API for intelligent features\n- Auth: Supabase Auth (Google + email)\n- Payments: Stripe\n- Hosting: Vercel\n\n## Core Features (MVP)\n1. User authentication and onboarding\n2. Core product experience with AI-powered features\n3. Dashboard with analytics\n4. Stripe subscription payments\n5. Admin panel for content management\n\n## Getting Started\nRun \`npx create-next-app\` with TypeScript. Set up Supabase project and add env vars for SUPABASE_URL, SUPABASE_ANON_KEY, CLAUDE_API_KEY, and STRIPE_SECRET_KEY. Run \`npm run dev\` to start.`,
         tombstone_quote: "At least we tried... with other people's money."
       });
+      setBuildPromptLoading(false);
       incrementRoastCount();
       setTimeout(() => setShowCard(true), 100);
     } finally {
@@ -164,6 +188,9 @@ export default function DeadStartups() {
     setSearchQuery("");
     setCopyConfirm(false);
     setPromptCopied(false);
+    setBuildPrompt(null);
+    setBuildPromptLoading(false);
+    setShowBuildPrompt(false);
     window.location.hash = "";
   }, []);
 
@@ -944,84 +971,131 @@ export default function DeadStartups() {
                     </div>
                   )}
 
-                  {/* Build this with AI card */}
-                  {roastResult.rebuild_prompt && (
-                    <div style={{
-                      background: "rgba(34,197,94,0.08)",
-                      border: "2px dashed rgba(34,197,94,0.3)",
-                      borderRadius: 10,
-                      padding: 20,
-                    }}>
-                      <div style={{
-                        fontSize: 12, letterSpacing: 2, color: "#22c55e",
+                  {/* View Build Prompt button */}
+                  <div style={{ marginTop: 4 }}>
+                    <button
+                      onClick={() => setShowBuildPrompt(!showBuildPrompt)}
+                      style={{
+                        width: "100%",
+                        background: showBuildPrompt ? "rgba(34,197,94,0.15)" : "rgba(34,197,94,0.08)",
+                        border: "2px dashed rgba(34,197,94,0.3)",
+                        borderRadius: 10,
+                        padding: "14px 20px",
+                        cursor: "pointer",
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "rgba(34,197,94,0.15)"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = showBuildPrompt ? "rgba(34,197,94,0.15)" : "rgba(34,197,94,0.08)"}
+                    >
+                      <span style={{
+                        fontSize: 13, letterSpacing: 2, color: "#22c55e",
                         textTransform: "uppercase", fontWeight: 700,
-                        marginBottom: 8,
                         fontFamily: "'Courier New', monospace",
                       }}>
-                        {"\uD83D\uDE80"} BUILD THIS WITH AI
-                      </div>
-                      <p style={{
-                        fontSize: 14, lineHeight: 1.6, color: "#9ca3af",
-                        margin: "0 0 12px 0",
-                      }}>
-                        A complete project brief you can paste into Claude Code or Cursor to scaffold the entire app.
-                      </p>
+                        {buildPromptLoading ? (
+                          <>Generating Build Prompt<span style={{ animation: "pulse 1.5s infinite" }}> ...</span></>
+                        ) : showBuildPrompt ? (
+                          "Hide Build Prompt"
+                        ) : (
+                          <>{"🚀"} View Build Prompt</>
+                        )}
+                      </span>
+                    </button>
 
-                      {/* Prompt preview */}
+                    {/* Expanded build prompt panel */}
+                    {showBuildPrompt && (
                       <div style={{
-                        background: "#0a0a0a",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                        borderRadius: 8,
-                        padding: 16,
-                        marginBottom: 16,
-                        maxHeight: 200,
-                        overflowY: "auto",
-                        fontFamily: "'Courier New', monospace",
-                        fontSize: 12,
-                        lineHeight: 1.6,
-                        color: "#9ca3af",
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word",
+                        background: "rgba(34,197,94,0.08)",
+                        borderLeft: "2px dashed rgba(34,197,94,0.3)",
+                        borderRight: "2px dashed rgba(34,197,94,0.3)",
+                        borderBottom: "2px dashed rgba(34,197,94,0.3)",
+                        borderRadius: "0 0 10px 10px",
+                        padding: 20,
+                        marginTop: -2,
                       }}>
-                        {roastResult.rebuild_prompt}
-                      </div>
+                        {buildPromptLoading ? (
+                          <div style={{
+                            textAlign: "center", padding: "30px 0", color: "#9ca3af",
+                            fontFamily: "'Courier New', monospace", fontSize: 14,
+                          }}>
+                            <div style={{
+                              width: 24, height: 24, border: "3px solid rgba(34,197,94,0.2)",
+                              borderTopColor: "#22c55e", borderRadius: "50%",
+                              animation: "spin 0.8s linear infinite",
+                              margin: "0 auto 12px",
+                            }} />
+                            AI is generating a comprehensive project brief...
+                          </div>
+                        ) : buildPrompt ? (
+                          <>
+                            <p style={{
+                              fontSize: 14, lineHeight: 1.6, color: "#9ca3af",
+                              margin: "0 0 12px 0",
+                            }}>
+                              Paste this into Claude Code, Cursor, Bolt.new, or Lovable to scaffold the entire app.
+                            </p>
 
-                      <button
-                        onClick={() => {
-                          navigator.clipboard?.writeText(roastResult.rebuild_prompt);
-                          setPromptCopied(true);
-                          setTimeout(() => setPromptCopied(false), 3000);
-                        }}
-                        style={{
-                          width: "100%",
-                          background: promptCopied ? "rgba(34,197,94,0.2)" : "#22c55e",
-                          border: promptCopied ? "1px solid #22c55e" : "none",
-                          borderRadius: 8,
-                          padding: "14px 20px",
-                          cursor: "pointer",
-                          color: promptCopied ? "#22c55e" : "#0a0a0a",
-                          fontSize: 15,
-                          fontWeight: 700,
-                          letterSpacing: 1.5,
-                          textTransform: "uppercase",
-                          fontFamily: "'Courier New', monospace",
-                          transition: "all 0.2s",
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!promptCopied) {
-                            e.currentTarget.style.background = "#16a34a";
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!promptCopied) {
-                            e.currentTarget.style.background = "#22c55e";
-                          }
-                        }}
-                      >
-                        {promptCopied ? "\u2705 COPIED! Paste into Claude Code or Cursor" : "COPY BUILD PROMPT"}
-                      </button>
-                    </div>
-                  )}
+                            <div style={{
+                              background: "#0a0a0a",
+                              border: "1px solid rgba(255,255,255,0.1)",
+                              borderRadius: 8,
+                              padding: 16,
+                              marginBottom: 16,
+                              maxHeight: 300,
+                              overflowY: "auto",
+                              fontFamily: "'Courier New', monospace",
+                              fontSize: 12,
+                              lineHeight: 1.6,
+                              color: "#9ca3af",
+                              whiteSpace: "pre-wrap",
+                              wordBreak: "break-word",
+                            }}>
+                              {buildPrompt}
+                            </div>
+
+                            <button
+                              onClick={() => {
+                                navigator.clipboard?.writeText(buildPrompt);
+                                setPromptCopied(true);
+                                setTimeout(() => setPromptCopied(false), 3000);
+                              }}
+                              style={{
+                                width: "100%",
+                                background: promptCopied ? "rgba(34,197,94,0.2)" : "#22c55e",
+                                border: promptCopied ? "1px solid #22c55e" : "none",
+                                borderRadius: 8,
+                                padding: "14px 20px",
+                                cursor: "pointer",
+                                color: promptCopied ? "#22c55e" : "#0a0a0a",
+                                fontSize: 15,
+                                fontWeight: 700,
+                                letterSpacing: 1.5,
+                                textTransform: "uppercase",
+                                fontFamily: "'Courier New', monospace",
+                                transition: "all 0.2s",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!promptCopied) e.currentTarget.style.background = "#16a34a";
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!promptCopied) e.currentTarget.style.background = "#22c55e";
+                              }}
+                            >
+                              {promptCopied ? "\u2705 COPIED! Paste into Claude Code or Cursor" : "COPY BUILD PROMPT"}
+                            </button>
+                          </>
+                        ) : (
+                          <div style={{
+                            textAlign: "center", padding: "20px 0", color: "#ef4444",
+                            fontFamily: "'Courier New', monospace", fontSize: 14,
+                          }}>
+                            Failed to generate build prompt. Try roasting again.
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Action buttons */}
@@ -1133,6 +1207,10 @@ export default function DeadStartups() {
         @keyframes loadSlide {
           0% { transform: translateX(-100%); }
           100% { transform: translateX(350%); }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
         ::selection {
           background: rgba(239, 68, 68, 0.3);
