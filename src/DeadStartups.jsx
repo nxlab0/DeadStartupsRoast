@@ -2387,7 +2387,7 @@ This is inspired by the failed startup ${selectedStartup.name} — learn from th
                   whiteSpace: "nowrap",
                 }}
               >
-                SAVE
+                USE
               </button>
             </div>
             {apiKeyError && (
