@@ -1,4 +1,1 @@
-What is the basis of listing these startups and their data?  source? 
-Save the roast once created, so that we need to generate the roast again.
-What happens when i submit a startup for Graveyard?
-
+log usage
