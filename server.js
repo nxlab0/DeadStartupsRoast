@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import { attachObserver } from 'guardian-tap';
 import sharp from 'sharp';
 import { createClient } from '@supabase/supabase-js';
 import { fileURLToPath } from 'url';
@@ -22,6 +23,7 @@ async function loadCacheFromDB() {
 loadCacheFromDB();
 
 const app = express();
+const server = attachObserver(app);
 const PORT = process.env.PORT || 3002;
 
 const FAILED_STARTUPS = [
@@ -1113,6 +1115,6 @@ app.get('/{*splat}', (req, res) => {
   res.sendFile(join(__dirname, 'dist', 'index.html'));
 });
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
