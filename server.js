@@ -23,7 +23,7 @@ async function loadCacheFromDB() {
 loadCacheFromDB();
 
 const app = express();
-const server = attachObserver(app);
+attachObserver(app);
 const PORT = process.env.PORT || 3002;
 
 const FAILED_STARTUPS = [
@@ -1115,6 +1115,6 @@ app.get('/{*splat}', (req, res) => {
   res.sendFile(join(__dirname, 'dist', 'index.html'));
 });
 
-server.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
